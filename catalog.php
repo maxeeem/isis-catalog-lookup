@@ -5,10 +5,13 @@
 
 <?php
 
+{# iNCLUDES
+
 require "../parser/mysqlConnect.php";
 
+}
 
-if (1) { // FUNCTiONS
+{# FUNCTiONS
 
 function makeSelect($linecard) {
 
@@ -56,7 +59,7 @@ function display($results) {
 
 }
 
-if (1) { // VARiABLES
+{# VARiABLES
 
 $linecard = fopen("linecard.csv", "r") or die("<p>Couldn't find the Linecard file.</p>");
 
@@ -81,14 +84,11 @@ EOT;
 
 }
 
-
-if (empty($_POST)) echo $form;
-
-else {
+{# MAiN
 
 echo $form;
 
-display($results);
+if (!empty($_POST)) display($results);
 
 }
 
