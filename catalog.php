@@ -10,14 +10,16 @@ require "../parser/mysqlConnect.php";
 
 if (1) { // FUNCTiONS
 
-function wrap($item) {
+function makeSelect($linecard) {
 
-	$result = "<option value='{$item}'>{$item}</option>";
+	while ($line = fgetcsv($linecard)) $brands[] = array($line[0], $line[1]); fclose($linecard);
+
+	foreach ($brands as $brand) @$select .= "<option value='{$brand[0]}'>{$brand[1]}</option>";
 	
-	return $result;
+	return $select;
 
 }
-	
+
 function doSearch($linecode, $partnumber) {
 
 	global $mysqli;
@@ -26,32 +28,14 @@ function doSearch($linecode, $partnumber) {
 	
 	$res = mysqli_query($mysqli, $search);
 
-	$res->data_seek(0);
-	while ($row = $res->fetch_assoc()) {
-		$rows[] = $row;
-	}
+	$res->data_seek(0);	
+	
+	while ($row = $res->fetch_assoc()) $rows[] = $row;
 	
 	return $rows;
 	
 }	
 
-function getBrands() {
-
-	global $mysqli;
-
-	$search = "SELECT DISTINCT `LineCode` FROM `table 1`";
-	
-	$res = mysqli_query($mysqli, $search);
-
-	$res->data_seek(0);
-	while ($row = $res->fetch_assoc()) {
-		$brands[] = $row['LineCode'];
-	}
-
-	return $brands;
-
-}
-	
 function display($results) {
 
 	foreach ($results as $res) @$avail += $res['Avail'];
@@ -74,14 +58,16 @@ function display($results) {
 
 if (1) { // VARiABLES
 
-foreach (getBrands() as $brand) @$select .= wrap($brand);
+$linecard = fopen("linecard.csv", "r") or die("<p>Couldn't find the Linecard file.</p>");
+
+$select = makeSelect($linecard);
 
 @$results = doSearch($_POST['linecode'], $_POST['partnumber'])
 						or die("<center><h3>Could not find <u>{$_POST['linecode']}{$_POST['partnumber']}</u>. Please check the part number and <a href='{$_SERVER['PHP_SELF']}'>try again</a>.</h3></center>");
 
 $form = <<<EOT
 				<br />
-				<center><h2>Select <u>line code</u> and then type in a <u>part number</u> below:</h2>
+				<center><h2>Select a <u>manufacturer</u> and then type in a <u>part number</u> below:</h2>
 				<br />
 				<form action="{$_SERVER['PHP_SELF']}" method="POST">
 				<select name="linecode">
@@ -92,7 +78,7 @@ $form = <<<EOT
 				</form>
 				</center>
 EOT;
-	
+
 }
 
 
