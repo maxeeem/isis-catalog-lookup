@@ -39,7 +39,10 @@ function doSearch($linecode, $partnumber) {
 	
 }	
 
-function display($results) {
+function showResults() {
+
+	$results = doSearch($_POST['linecode'], $_POST['partnumber'])
+							or die("<center><h3>Could not find <u>{$_POST['linecode']}{$_POST['partnumber']}</u>. Please check the part number and <a href='{$_SERVER['PHP_SELF']}'>try again</a>.</h3></center>");
 
 	foreach ($results as $res) @$avail += $res['Avail'];
 
@@ -65,9 +68,6 @@ $linecard = fopen("linecard.csv", "r") or die("<p>Couldn't find the Linecard fil
 
 $select = makeSelect($linecard);
 
-@$results = doSearch($_POST['linecode'], $_POST['partnumber'])
-						or die("<center><h3>Could not find <u>{$_POST['linecode']}{$_POST['partnumber']}</u>. Please check the part number and <a href='{$_SERVER['PHP_SELF']}'>try again</a>.</h3></center>");
-
 $form = <<<EOT
 				<br />
 				<center><h2>Select a <u>manufacturer</u> and then type in a <u>part number</u> below:</h2>
@@ -88,7 +88,7 @@ EOT;
 
 echo $form;
 
-if (!empty($_POST)) display($results);
+if (!empty($_POST)) showResults();
 
 }
 
