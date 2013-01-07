@@ -15,9 +15,17 @@ require "../parser/mysqlConnect.php";
 
 function makeSelect($linecard) {
 
-	while ($line = fgetcsv($linecard)) $brands[] = array($line[0], $line[1]); fclose($linecard);
+	while ($line = fgetcsv($linecard)) $brands[] = array($line[0], $line[1]);
+	
+	fclose($linecard);
 
-	foreach ($brands as $brand) @$select .= "<option value='{$brand[0]}'>{$brand[1]}</option>";
+	foreach ($brands as $brand) {
+	
+		if (!empty($_POST) && $_POST['linecode'] == $brand[0]) @$select .= "<option value='{$brand[0]}' selected>{$brand[1]}</option>";
+		
+		else @$select .= "<option value='{$brand[0]}'>{$brand[1]}</option>";
+	
+	}
 	
 	return $select;
 
