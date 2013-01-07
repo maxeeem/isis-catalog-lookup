@@ -26,15 +26,21 @@ function makeSelect($linecard) {
 function doSearch($linecode, $partnumber) {
 
 	global $mysqli;
-
-	$search = "SELECT * FROM `table 1` WHERE `LineCode` = '{$linecode}' AND `Part Number` = '{$partnumber}'";
 	
-	$res = mysqli_query($mysqli, $search);
+	$search = mysqli_prepare($mysqli, "SELECT * FROM `table 1` WHERE `LineCode` = ? AND `Part Number` = ?");
+	
+	mysqli_stmt_bind_param($search, "ss", $linecode, $partnumber);
+	
+	mysqli_stmt_execute($search);
+	
+	$res = mysqli_stmt_get_result($search);
 
+	mysqli_stmt_close($search);
+	
 	$res->data_seek(0);	
 	
 	while ($row = $res->fetch_assoc()) $rows[] = $row;
-	
+
 	if (empty($rows)) exit("<center>Could not find {$linecode}{$partnumber}. Please check the part number and try again.</center>");	
 	
 	return $rows;
