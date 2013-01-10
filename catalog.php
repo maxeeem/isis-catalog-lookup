@@ -31,9 +31,57 @@ function makeSelect($linecard) {
 
 }
 
+function loadVariations($var) {
+
+	$file = fopen($var, "r");
+	
+	while ($row = fgetcsv($file)) $rows[$row[0]][$row[1]] = $row[2];
+
+	fclose($file);
+	
+	return $rows;
+
+}
+
+function getVariations($delimiters) {
+	
+	global $mysqli, $var;
+	
+	$query = "SELECT DISTINCT `LineCode`, `Part Number` FROM `table 1` where ";
+	
+	foreach ($delimiters as $del) $query .= "`Part Number` like '%{$del}%' or ";
+	
+	$query = rtrim($query, ' or ');
+	
+	$res = mysqli_query($mysqli, $query);
+	
+	$res->data_seek(0);	
+	
+	while ($row = $res->fetch_assoc()) {
+	
+		$key = str_replace($delimiters, '', $row['Part Number']);
+
+		$rows[$row['LineCode']][$key] = array($row['LineCode'], $key, $row['Part Number']);
+
+	}
+	
+	if (empty($rows)) exit("<center>Could not retrieve SKU variations.</center>");	
+	
+	$output = fopen($var, "w");
+	
+	foreach ($rows as $r) foreach ($r as $data) fputcsv($output, $data);
+	
+	fclose($output);
+	
+	return $rows;
+
+}
+
 function doSearch($linecode, $partnumber) {
 
-	global $mysqli;
+	global $mysqli, $variations;
+	
+	if (array_key_exists($partnumber, $variations[$linecode])) $rows = doSearch($linecode, $variations[$linecode][$partnumber]);
 	
 	$search = mysqli_prepare($mysqli, "SELECT * FROM `table 1` WHERE `LineCode` = ? AND `Part Number` = ?");
 	
@@ -48,8 +96,8 @@ function doSearch($linecode, $partnumber) {
 	$res->data_seek(0);	
 	
 	while ($row = $res->fetch_assoc()) $rows[] = $row;
-
-	if (empty($rows)) exit("<center>Could not find {$linecode}{$partnumber}. Please check the part number and try again.</center>");	
+	
+	if (!isset($rows)) exit("<center>Could not find {$linecode}{$partnumber}. Please check the part number and try again.</center>");
 	
 	return $rows;
 	
@@ -71,8 +119,6 @@ function showResults() {
 	
 	echo "<tr><th align=left>Price 9</th><td>$" . $results[0]['Price 9'] . "</td></tr></table></div></center>";
 	
-	// var_dump($results);
-	
 }
 
 }
@@ -82,6 +128,12 @@ function showResults() {
 $linecard = fopen("linecard.csv", "r") or die("<p>Couldn't find the Linecard file.</p>");
 
 $select = makeSelect($linecard);
+
+$delimiters = array('-', '.');
+
+$var = "variations.csv";
+
+$variations = (file_exists($var) && (date('Ymd', filemtime($var)) == date('Ymd'))) ? loadVariations($var) : getVariations($delimiters);
 
 $form = <<<EOT
 				<br />
@@ -104,7 +156,7 @@ EOT;
 echo $form;
 
 if (!empty($_POST)) showResults();
-
+	
 }
 
 ?>
